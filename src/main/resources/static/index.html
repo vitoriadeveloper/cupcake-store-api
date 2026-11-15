@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#713f35" />
+    <title>Doce — Cupcakes feitos para você</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <a class="brand" href="#catalogo" aria-label="Doce, início"
+        ><span class="brand-icon">d.</span> doce<span class="brand-sub"
+          >CUPCAKES ARTESANAIS</span
+        ></a
+      >
+      <nav aria-label="Navegação principal">
+        <a href="#catalogo">Cardápio</a
+        ><button id="history-button" class="text-button">Meus pedidos</button
+        ><button id="cart-button" class="button small">
+          Sacola <span id="cart-count">0</span>
+        </button>
+      </nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <span class="eyebrow">PEQUENOS BOLOS. GRANDES MOMENTOS.</span>
+          <h1>Um pouco de doce<br />muda o seu dia.</h1>
+          <p>
+            Escolha seu sabor favorito e deixe o resto com a gente.<br />Cupcakes
+            caprichados, do primeiro ao último pedacinho.
+          </p>
+          <a class="button" href="#catalogo"
+            >Encontre seu favorito <span aria-hidden="true">↗</span></a
+          >
+          <div class="hero-note">
+            <span>♡ Feitos com carinho</span><span>Entrega gratuita</span>
+          </div>
+        </div>
+        <div class="hero-photo">
+          <img
+            src="/images/cupcakes/morango.png"
+            alt="Cupcake com cobertura de morango e fruta fresca"
+          /><span class="photo-note">Uma pausa deliciosa.</span>
+        </div>
+      </section>
+      <section id="catalogo" class="catalog">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">ESCOLHA A SUA FELICIDADE</span>
+            <h2>Nosso cardápio</h2>
+          </div>
+          <label class="search"
+            ><span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Busque um sabor…"
+              aria-label="Buscar cupcakes"
+          /></label>
+        </div>
+        <div id="filters" class="filters" aria-label="Filtrar por sabor"></div>
+        <div id="catalog-status" role="status"></div>
+        <div id="products" class="products"></div>
+      </section>
+      <section class="bottom-note">
+        <span>Feito à mão, escolhido por você.</span>
+        <p>Da nossa cozinha para os seus melhores momentos.</p>
+      </section>
+    </main>
+    <footer>
+      <a class="brand" href="#">doce.</a
+      ><span>Um cupcake. Muitos motivos para sorrir.</span>
+    </footer>
+    <dialog id="cart-dialog" aria-labelledby="cart-title ">
+      <div class="dialog-header">
+        <h2 id="cart-title">Sua sacola</h2>
+        <button class="close" data-close aria-label="Fechar sacola">×</button>
+      </div>
+      <div id="cart-items"></div>
+      <div class="totals">
+        <span>Entrega <strong>Grátis</strong></span
+        ><span class="total"
+          >Total estimado <strong id="cart-total"></strong></span
+        ><small>O valor final é confirmado pela loja ao criar o pedido.</small>
+      </div>
+      <button id="checkout-button" class="button full">
+        Continuar para entrega →
+      </button>
+    </dialog>
+    <dialog id="checkout-dialog" aria-labelledby="checkout-title">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">QUASE LÁ</span>
+          <h2 id="checkout-title">Finalize seu pedido</h2>
+        </div>
+        <button class="close" data-close aria-label="Fechar checkout">×</button>
+      </div>
+      <p class="muted">
+        Seus dados e o endereço serão usados para este pedido.
+      </p>
+      <form id="checkout-form">
+        <fieldset>
+          <legend>01 · Seus dados</legend>
+          <label
+            >Nome completo<input
+              name="nome"
+              autocomplete="name"
+              required
+              maxlength="120"
+          /></label>
+          <div class="form-row">
+            <label
+              >E-mail<input
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                maxlength="254" /></label
+            ><label
+              >Telefone<input
+                name="telefone"
+                type="tel"
+                autocomplete="tel"
+                required
+                maxlength="30"
+            /></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>02 · Endereço de entrega</legend>
+          <div class="form-row">
+            <label
+              >CEP<input
+                name="cep"
+                autocomplete="postal-code"
+                required
+                pattern="[0-9]{5}-?[0-9]{3}"
+                placeholder="40000-000" /></label
+            ><label
+              >Estado<select
+                name="estado"
+                autocomplete="address-level1"
+                required
+              >
+                <option value="">Selecione</option>
+              </select></label
+            >
+          </div>
+          <label
+            >Rua / avenida<input
+              name="logradouro"
+              autocomplete="address-line1"
+              required
+              maxlength="200"
+          /></label>
+          <div class="form-row">
+            <label>Número<input name="numero" required maxlength="30" /></label
+            ><label
+              >Complemento <small>(opcional)</small
+              ><input
+                name="complemento"
+                autocomplete="address-line2"
+                maxlength="120"
+            /></label>
+          </div>
+          <div class="form-row">
+            <label>Bairro<input name="bairro" required maxlength="120" /></label
+            ><label
+              >Cidade<input
+                name="cidade"
+                autocomplete="address-level2"
+                required
+                maxlength="120"
+            /></label>
+          </div>
+        </fieldset>
+        <p id="checkout-error" class="error" role="alert"></p>
+        <button id="submit-order" type="submit" class="button full">
+          Confirmar pedido
+        </button>
+        <p class="muted fine">
+          O pedido será salvo no banco. Nenhuma cobrança é realizada nesta
+          etapa.
+        </p>
+      </form>
+    </dialog>
+    <dialog
+      id="history-dialog"
+      class="wide-dialog"
+      aria-labelledby="history-title"
+    >
+      <div class="dialog-header">
+        <h2 id="history-title">Meus pedidos</h2>
+        <button class="close" data-close aria-label="Fechar pedidos">×</button>
+      </div>
+      <p class="muted">Pedidos vinculados ao cadastro usado neste navegador.</p>
+      <button id="refresh-orders" class="text-button">
+        ↻ Atualizar pedidos
+      </button>
+      <div id="orders" aria-live="polite"></div>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
+</html>
