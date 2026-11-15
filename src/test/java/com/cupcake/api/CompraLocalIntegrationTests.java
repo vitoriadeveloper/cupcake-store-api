@@ -38,7 +38,26 @@ class CompraLocalIntegrationTests {
         cupcake = id(enviar("POST", "/api/cupcakes",
             """
             {"nome":"Chocolate","descricao":"Cupcake gourmet","preco":12.50,"sabor":"Chocolate","disponivel":true}
-            """, 201));
+            """, 200));
+    }
+
+    @Test
+    void lojaServeFrontendImagensECriaPedidoPersistido() throws Exception {
+        var pagina = http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/")).GET().build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(pagina.statusCode()).isEqualTo(200);
+        assertThat(pagina.body()).contains("Nosso cardápio", "/app.js", "checkout-form");
+        for (String arquivo : new String[]{"app.js", "store.mjs", "styles.css", "images/cupcakes/chocolate.png", "images/cupcakes/morango.png", "images/cupcakes/baunilha.png", "images/cupcakes/limao.png", "images/cupcakes/red-velvet.png", "images/cupcakes/cenoura.png", "images/cupcakes/coco.png", "images/cupcakes/doce-de-leite.png"}) {
+            var response = http.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/" + arquivo)).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+            assertThat(response.statusCode()).as(arquivo).isEqualTo(200);
+            assertThat(response.body()).isNotEmpty();
+            if (arquivo.endsWith(".png")) assertThat(response.headers().firstValue("Content-Type").orElse("")).startsWith("image/png");
+        }
+        enviar("GET", "/api/cupcakes", null, 200);
+        long pedido = criarPedido();
+        assertThat(jdbc.queryForObject("SELECT valor_total FROM cupcake.tb_pedidos WHERE id = ?", java.math.BigDecimal.class, pedido)).isEqualByComparingTo("25.00");
+        assertThat(jdbc.queryForObject("SELECT logradouro FROM cupcake.tb_pedidos WHERE id = ?", String.class, pedido)).isEqualTo("Rua A");
+        assertThat(jdbc.queryForObject("SELECT quantidade FROM cupcake.tb_itens_pedido WHERE pedido_id = ?", Integer.class, pedido)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT cliente_id FROM cupcake.tb_pedidos WHERE id = ?", Long.class, pedido)).isEqualTo(cliente);
     }
 
     @Test
@@ -180,7 +199,7 @@ class CompraLocalIntegrationTests {
 
     long criarPedido() throws Exception {
         return id(enviar("POST", "/api/pedidos",
-            pedidoJson("[{\"cupcakeId\":" + cupcake + ",\"quantidade\":2}]"), 201));
+            pedidoJson("[{\"cupcakeId\":" + cupcake + ",\"quantidade\":2}]"), 200));
     }
 
     String pedidoJson(String itens) {
