@@ -93,11 +93,49 @@ Não é necessário iniciar um servidor separado para o frontend ou configurar C
 
 ### Preparar o catálogo
 
-Cadastre os cupcakes por `POST /api/cupcakes` para que apareçam na loja. Não há carga automática de produtos.
+A migration `V5__popular_catalogo_inicial.sql` cadastra oito cupcakes com preços iniciais e os caminhos das imagens. Ela roda automaticamente em qualquer banco que ainda não tenha aplicado a V5, inclusive local e produção. Produtos existentes com o mesmo nome (ignorando maiúsculas e espaços nas extremidades) são preservados, inclusive os inativados. Revise os preços antes de divulgar a loja. Outros produtos podem ser cadastrados por `POST /api/cupcakes`.
 
 As imagens estão em `static/images/cupcakes`. O frontend associa chocolate, morango, baunilha, limão, red velvet, cenoura, coco e doce de leite às imagens locais, com prioridade sobre `imagemUrl`. Outros sabores usam a URL cadastrada ou uma imagem padrão.
 
 A sacola e a identificação do cadastro ficam no `localStorage`; o histórico é consultado na API. O checkout reutiliza o cadastro identificado no mesmo navegador. Um e-mail existente não pode ser cadastrado novamente.
+
+---
+
+## Deploy na Render
+
+O `Dockerfile` compila com Java 21 e Maven e executa o JAR com um usuário sem privilégios. Frontend e imagens ficam dentro do JAR; não é necessário disco persistente para essas imagens. O PostgreSQL é um serviço separado.
+
+1. Crie um **Render Postgres** e um **Web Service** conectado a este repositório, com runtime **Docker**, na mesma região do banco. Se este projeto estiver na subpasta `api` do repositório, configure **Root Directory** como `api`; caso contrário, deixe em branco. O Dockerfile fica em `./Dockerfile`.
+2. Copie `.env.example` para `.env` (um modelo local já foi preparado) e substitua `SEU_HOST_INTERNO`, `SEU_BANCO`, `SEU_USUARIO` e `SUA_SENHA` pelos dados do PostgreSQL. Use o hostname interno quando ambos os serviços estiverem na mesma região. Não publique o `.env`; ele está ignorado pelo Git e excluído do contexto Docker.
+3. Em **Environment → Add from .env**, importe o conteúdo preenchido. Use `SPRING_PROFILES_ACTIVE=prod`. A aplicação recebe as variáveis da Render; o Spring não lê esse arquivo automaticamente. Não é necessário enviá-lo como Secret File.
+4. Configure **Health Check Path** como `/api/cupcakes` e inicie o deploy. O perfil `prod` escuta em `0.0.0.0` e usa a variável `PORT` fornecida pela Render, com fallback para `8080`. Não ative o perfil `local`, que restringe o servidor a `127.0.0.1`.
+5. Confira nos logs a execução do Flyway até a V5. Acesse `/`, `/api/cupcakes` e `/images/cupcakes/chocolate.png` na URL pública do serviço para verificar loja, catálogo e imagens.
+
+Formato da URL do banco (a URL `postgresql://usuario:senha@host/banco` da Render não é diretamente uma URL JDBC):
+
+```dotenv
+SPRING_PROFILES_ACTIVE=prod
+DB_URL=jdbc:postgresql://SEU_HOST_INTERNO:5432/SEU_BANCO?currentSchema=cupcake
+DB_USERNAME=SEU_USUARIO
+DB_PASSWORD=SUA_SENHA
+```
+
+Para conexões externas que exigem SSL, use o hostname externo e acrescente `&sslmode=require` à URL JDBC. O usuário do banco precisa poder criar o schema, tabelas e o histórico do Flyway. Reiniciar ou publicar novamente não reaplica migrations já concluídas.
+
+As imagens são arquivos em `src/main/resources/static/images/cupcakes`; no banco, `imagem_url` contém caminhos públicos como `/images/cupcakes/chocolate.png`, sem o prefixo `static` e sem caminhos do Windows.
+
+O pagamento continua sendo apenas uma simulação disponível no perfil `local`. Em `prod`, esse endpoint retorna `404`; não há integração de pagamento real, e o serviço continua sem autenticação.
+
+Para testar a imagem localmente com um banco acessível pelo contêiner:
+
+```powershell
+docker build -t cupcake-api .
+docker run --rm --env-file .env -e PORT=8080 -p 8080:8080 cupcake-api
+```
+
+Se usar PostgreSQL na máquina Windows, o hostname no `.env` deve ser `host.docker.internal`, em vez de `localhost`. Para publicar na Render não é necessário ter Docker instalado localmente: a plataforma constrói a imagem.
+
+Referências: [Docker na Render](https://render.com/docs/docker), [importar variáveis de um .env](https://render.com/docs/configure-environment-variables) e [configuração de porta](https://render.com/docs/web-services#port-binding).
 
 ---
 
